@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_tavily_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_tavily';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class TavilyResult {
+  /// Creates a result.
   const TavilyResult({
     this.searchDepth,
     this.topic,
@@ -73,8 +74,13 @@ class TavilyResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class TavilyCallResult<T> {
+  /// Creates a call result.
   const TavilyCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final TavilyResult? result;
 }
@@ -98,7 +104,7 @@ Future<T> tracedTavily<T>({
   final span = _tracer().startSpan(
     'tavily $operation',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
@@ -106,104 +112,105 @@ Future<T> tracedTavily<T>({
       final res = r.result!;
       final extras = <Attribute<Object>>[];
       if (res.searchDepth != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'tavily.search.depth',
           res.searchDepth!,
         ));
       }
       if (res.topic != null) {
-        extras.add(OTel.attributeString('tavily.topic', res.topic!));
+        extras.add(OTelAPI.attributeString('tavily.topic', res.topic!));
       }
       if (res.queryLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tavily.query.length',
           res.queryLength!,
         ));
       }
       if (res.maxResults != null) {
-        extras.add(OTel.attributeInt('tavily.max_results', res.maxResults!));
+        extras.add(OTelAPI.attributeInt('tavily.max_results', res.maxResults!));
       }
       if (res.resultCount != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tavily.result.count',
           res.resultCount!,
         ));
       }
       if (res.includeAnswer != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'tavily.include_answer',
           res.includeAnswer!,
         ));
       }
       if (res.answerLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tavily.answer.length',
           res.answerLength!,
         ));
       }
       if (res.includeRawContent != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'tavily.include_raw_content',
           res.includeRawContent!,
         ));
       }
       if (res.includeImages != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'tavily.include_images',
           res.includeImages!,
         ));
       }
       if (res.imageCount != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tavily.image.count',
           res.imageCount!,
         ));
       }
       if (res.includeDomains != null) {
-        extras.add(OTel.attributeStringList(
+        extras.add(OTelAPI.attributeStringList(
           'tavily.include_domains',
           res.includeDomains!,
         ));
       }
       if (res.excludeDomains != null) {
-        extras.add(OTel.attributeStringList(
+        extras.add(OTelAPI.attributeStringList(
           'tavily.exclude_domains',
           res.excludeDomains!,
         ));
       }
       if (res.days != null) {
-        extras.add(OTel.attributeInt('tavily.days', res.days!));
+        extras.add(OTelAPI.attributeInt('tavily.days', res.days!));
       }
       if (res.timeRange != null) {
-        extras.add(OTel.attributeString('tavily.time_range', res.timeRange!));
+        extras
+            .add(OTelAPI.attributeString('tavily.time_range', res.timeRange!));
       }
       if (res.responseTimeMs != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tavily.response_time_ms',
           res.responseTimeMs!,
         ));
       }
       if (res.creditsUsed != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tavily.credits.used',
           res.creditsUsed!,
         ));
       }
       if (res.errorCode != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'tavily.error.code',
           res.errorCode!,
         ));
         span.setStatus(SpanStatusCode.Error, 'Tavily ${res.errorCode}');
       }
       if (res.errorMessage != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'tavily.error.message',
           res.errorMessage!,
         ));
       }
       if (res.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           res.statusCode!,
         ));
@@ -211,13 +218,13 @@ Future<T> tracedTavily<T>({
           span.setStatus(SpanStatusCode.Error, 'Tavily HTTP ${res.statusCode}');
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
